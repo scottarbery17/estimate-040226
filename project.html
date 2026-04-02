@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fieldwork — Deck Renovation</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 14px; background: #f0f2f5; color: #1a1a1a; }
+
+    /* TOPBAR */
+    .topbar { background: #fff; border-bottom: 1px solid #e2e4e9; padding: 0 24px; height: 56px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
+    .topbar-left { display: flex; align-items: center; gap: 12px; }
+    .app-logo { font-weight: 700; font-size: 16px; color: #3b5bdb; letter-spacing: -0.3px; }
+    .topbar-divider { width: 1px; height: 20px; background: #e2e4e9; }
+    .breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #6b7280; }
+    .breadcrumb a { color: #6b7280; text-decoration: none; }
+    .breadcrumb a:hover { color: #1a1a1a; }
+    .breadcrumb .sep { color: #c4c8d4; }
+    .breadcrumb .current { color: #1a1a1a; font-weight: 500; }
+    .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: #3b5bdb; color: #fff; font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; }
+
+    /* PROJECT HEADER */
+    .project-header { background: #fff; border-bottom: 1px solid #e2e4e9; padding: 16px 24px; }
+    .project-title-row { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
+    .project-title-row h1 { font-size: 20px; font-weight: 700; color: #111827; letter-spacing: -0.3px; }
+    .project-meta { font-size: 13px; color: #6b7280; }
+    .status-badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 11.5px; font-weight: 600; }
+    .status-in-progress { background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; }
+
+    /* TABS */
+    .tab-bar { background: #fff; border-bottom: 1px solid #e2e4e9; padding: 0 24px; position: sticky; top: 56px; z-index: 9; }
+    .tab-bar-inner { display: flex; }
+    .tab-btn { padding: 12px 18px; font-size: 13.5px; font-weight: 500; color: #6b7280; background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; margin-bottom: -1px; }
+    .tab-btn:hover { color: #374151; }
+    .tab-btn.active { color: #3b5bdb; border-bottom-color: #3b5bdb; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .tab-inner { padding: 24px; }
+
+    /* BUTTONS */
+    .btn { padding: 7px 14px; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; }
+    .btn-secondary { background: #fff; border: 1px solid #d1d5db; color: #374151; }
+    .btn-secondary:hover { background: #f9fafb; }
+    .btn-primary { background: #3b5bdb; color: #fff; }
+    .btn-primary:hover { background: #3451c7; }
+
+    /* PANELS */
+    .panel { background: #fff; border: 1px solid #e2e4e9; border-radius: 10px; overflow: hidden; }
+    .panel-header { padding: 14px 18px; border-bottom: 1px solid #f0f2f5; display: flex; align-items: center; justify-content: space-between; }
+    .panel-title { font-weight: 600; font-size: 13px; color: #374151; text-transform: uppercase; letter-spacing: 0.5px; }
+    .panel-subtitle { font-size: 12px; color: #9ca3af; }
+
+    /* TABLES */
+    table { width: 100%; border-collapse: collapse; }
+    th { background: #f9fafb; padding: 9px 14px; text-align: left; font-size: 11.5px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.4px; border-bottom: 1px solid #f0f2f5; }
+    td { padding: 10px 14px; border-bottom: 1px solid #f7f8fa; vertical-align: middle; color: #374151; }
+    tr:last-child td { border-bottom: none; }
+    tr.item-row:hover td { background: #f9fafb; cursor: pointer; }
+    .num { text-align: right; font-variant-numeric: tabular-nums; }
+
+    /* BADGES */
+    .type-badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+    .type-labor    { background: #eff6ff; color: #1d4ed8; }
+    .type-material { background: #f0fdf4; color: #15803d; }
+    .type-rental   { background: #faf5ff; color: #7e22ce; }
+    .st-badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+    .st-completed   { background: #f0fdf4; color: #15803d; }
+    .st-in-progress { background: #fff7ed; color: #c2410c; }
+    .st-pending     { background: #f9fafb; color: #6b7280; border: 1px solid #e5e7eb; }
+
+    /* ROOM DIVIDERS */
+    .room-divider td { background: #f3f4f6; padding: 7px 14px; font-weight: 600; font-size: 11.5px; color: #374151; text-transform: uppercase; letter-spacing: 0.6px; border-top: 1px solid #e2e4e9; border-bottom: 1px solid #e2e4e9; }
+    .fees-divider td { background: #f5f3ff; color: #5b21b6; }
+    .total-row td { font-weight: 700; font-size: 14px; border-top: 2px solid #e2e4e9; padding: 12px 14px; background: #f9fafb; }
+    .fee-row td { color: #6b7280; font-size: 13px; background: #fafafa; }
+    .check-col { width: 36px; }
+    .check-col input[type="checkbox"] { width: 15px; height: 15px; cursor: pointer; accent-color: #3b5bdb; }
+    .empty-estimate { padding: 40px 20px; text-align: center; color: #9ca3af; font-size: 13px; }
+    .empty-icon { font-size: 28px; margin-bottom: 8px; }
+
+    /* STAGE SWITCHER */
+    .stage-switcher { display: flex; align-items: center; gap: 8px; padding: 12px 24px; background: #f9fafb; border-bottom: 1px solid #e2e4e9; flex-wrap: wrap; }
+    .stage-label { font-size: 11.5px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; margin-right: 4px; }
+    .stage-pill { padding: 5px 16px; border-radius: 20px; font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid #e2e4e9; background: #fff; color: #6b7280; transition: background 0.12s, border-color 0.12s, color 0.12s; }
+    .stage-pill.active { background: #3b5bdb; color: #fff; border-color: #3b5bdb; }
+    .stage-pill:hover:not(.active) { background: #f3f4f6; border-color: #d1d5db; color: #374151; }
+    .btn-add-stage { padding: 5px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; cursor: pointer; border: 1px dashed #d1d5db; background: transparent; color: #6b7280; margin-left: 4px; }
+    .btn-add-stage:hover { background: #f3f4f6; border-color: #9ca3af; color: #374151; }
+
+    /* ESTIMATED TAB */
+    .estimated-actions { padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #e2e4e9; background: #fff; gap: 12px; flex-wrap: wrap; }
+    .actions-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .actions-right { display: flex; align-items: center; gap: 10px; }
+    .published-link-bar { display: flex; align-items: center; gap: 8px; padding: 5px 12px; background: #f0fdf4; border: 1px solid #d1fae5; border-radius: 6px; font-size: 12.5px; }
+    .published-link-bar .link-label { color: #6b7280; font-weight: 500; }
+    .published-link-bar .link-url-text { color: #374151; font-family: "SF Mono","Fira Code",monospace; }
+    .published-link-bar .copy-btn { font-size: 11.5px; padding: 3px 9px; border-radius: 4px; border: 1px solid #d1d5db; background: #fff; cursor: pointer; color: #374151; font-weight: 500; }
+    .published-link-bar .copy-btn:hover { background: #f3f4f6; }
+    .estimated-body { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 24px; align-items: start; }
+
+    /* EDITABLE CELLS */
+    .editable-cell { display: inline-block; padding: 2px 5px; border-radius: 4px; min-width: 20px; outline: none; cursor: text; }
+    .editable-cell:hover { background: #f3f4f6; }
+    .editable-cell:focus { background: #eff6ff; box-shadow: 0 0 0 2px rgba(59,91,219,0.2); }
+
+    /* COMPARE */
+    .compare-banner { display: none; padding: 10px 16px; background: #eff6ff; border-bottom: 1px solid #bfdbfe; align-items: center; justify-content: space-between; font-size: 12.5px; color: #1d4ed8; }
+    .compare-banner.visible { display: flex; }
+    .btn-exit-compare { font-size: 12px; color: #6b7280; background: #fff; border: 1px solid #d1d5db; border-radius: 5px; padding: 3px 10px; cursor: pointer; }
+    .diff-added td { background: #f0fdf4 !important; }
+    .diff-added .diff-label { font-size: 10px; color: #15803d; font-weight: 700; margin-left: 6px; text-transform: uppercase; }
+    .diff-removed td { background: #fef2f2 !important; }
+    .diff-removed .diff-label { font-size: 10px; color: #dc2626; font-weight: 700; margin-left: 6px; text-transform: uppercase; }
+    .diff-removed .removed-val { color: #991b1b; text-decoration: line-through; opacity: 0.75; }
+    .diff-cell-changed { background: #fffbeb !important; }
+    .old-val { display: block; font-size: 11px; color: #9ca3af; text-decoration: line-through; margin-top: 1px; }
+
+    /* MODAL */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 300; align-items: center; justify-content: center; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: #fff; border-radius: 12px; width: 480px; box-shadow: 0 20px 60px rgba(0,0,0,0.18); overflow: hidden; }
+    .modal-header { padding: 20px 24px 16px; border-bottom: 1px solid #f0f2f5; }
+    .modal-header h2 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+    .modal-header p { font-size: 13px; color: #6b7280; }
+    .modal-body { padding: 20px 24px; }
+    .modal-body label { display: block; font-size: 12.5px; font-weight: 500; color: #374151; margin-bottom: 6px; }
+    .modal-body textarea { width: 100%; border: 1px solid #d1d5db; border-radius: 7px; padding: 9px 12px; font-size: 13px; font-family: inherit; resize: vertical; min-height: 80px; outline: none; }
+    .modal-body textarea:focus { border-color: #3b5bdb; box-shadow: 0 0 0 3px rgba(59,91,219,0.1); }
+    .modal-body input[type="text"] { width: 100%; border: 1px solid #d1d5db; border-radius: 7px; padding: 9px 12px; font-size: 13px; font-family: inherit; outline: none; }
+    .modal-body input[type="text"]:focus { border-color: #3b5bdb; box-shadow: 0 0 0 3px rgba(59,91,219,0.1); }
+    .modal-footer { padding: 14px 24px; border-top: 1px solid #f0f2f5; display: flex; justify-content: flex-end; gap: 10px; }
+    .link-result { display: none; padding: 16px 24px; border-top: 1px solid #f0f2f5; background: #f0fdf4; }
+    .link-result.visible { display: block; }
+    .link-result p { font-size: 12px; color: #15803d; font-weight: 500; margin-bottom: 8px; }
+    .link-box { display: flex; align-items: center; gap: 8px; background: #fff; border: 1px solid #d1fae5; border-radius: 7px; padding: 8px 12px; }
+    .link-box .link-url { flex: 1; font-size: 13px; color: #374151; font-family: "SF Mono","Fira Code",monospace; }
+    .link-box button { font-size: 12px; padding: 4px 10px; border-radius: 5px; border: 1px solid #d1d5db; background: #fff; cursor: pointer; }
+    .link-box button:hover { background: #f3f4f6; }
+    .preview-link { display: block; margin-top: 10px; font-size: 13px; color: #3b5bdb; text-decoration: none; font-weight: 500; }
+    .preview-link:hover { text-decoration: underline; }
+
+    /* DRAWER */
+    .drawer-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.25); z-index: 200; }
+    .drawer-backdrop.open { display: block; }
+    .drawer { position: fixed; top: 0; right: 0; width: 360px; height: 100vh; background: #fff; border-left: 1px solid #e2e4e9; box-shadow: -8px 0 32px rgba(0,0,0,0.1); z-index: 201; transform: translateX(100%); transition: transform 0.25s ease; display: flex; flex-direction: column; overflow: hidden; }
+    .drawer.open { transform: translateX(0); }
+    .drawer-header { padding: 16px 20px; border-bottom: 1px solid #f0f2f5; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+    .drawer-title { font-size: 15px; font-weight: 600; color: #111827; }
+    .drawer-close { background: none; border: none; cursor: pointer; color: #9ca3af; font-size: 22px; line-height: 1; padding: 2px 6px; border-radius: 4px; }
+    .drawer-close:hover { background: #f3f4f6; color: #374151; }
+    .drawer-list { flex: 1; overflow-y: auto; }
+    .version-item { padding: 14px 20px; border-bottom: 1px solid #f7f8fa; display: flex; gap: 12px; align-items: flex-start; cursor: pointer; }
+    .version-item:hover:not(.is-current) { background: #f9fafb; }
+    .version-item.is-current { cursor: default; }
+    .v-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+    .v-dot.filled { background: #3b5bdb; }
+    .v-dot.empty { border: 2px solid #9ca3af; background: #fff; }
+    .v-info { flex: 1; min-width: 0; }
+    .v-label { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; }
+    .v-num { font-size: 13px; font-weight: 600; color: #1a1a1a; }
+    .v-badge { font-size: 10px; font-weight: 600; padding: 1px 7px; border-radius: 10px; background: #eff6ff; color: #1d4ed8; text-transform: uppercase; letter-spacing: 0.4px; }
+    .v-date { font-size: 12px; color: #6b7280; margin-bottom: 3px; }
+    .v-note { font-size: 12px; color: #374151; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .v-chevron { color: #d1d5db; font-size: 16px; align-self: center; flex-shrink: 0; }
+    .drawer-subpanel { position: absolute; inset: 0; background: #fff; display: flex; flex-direction: column; transform: translateX(100%); transition: transform 0.2s ease; }
+    .drawer-subpanel.open { transform: translateX(0); }
+    .subpanel-header { padding: 14px 20px; border-bottom: 1px solid #f0f2f5; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .btn-back { background: none; border: none; cursor: pointer; color: #3b5bdb; font-size: 22px; line-height: 1; padding: 0 4px; border-radius: 4px; }
+    .btn-back:hover { background: #eff6ff; }
+    .subpanel-title { font-size: 14px; font-weight: 600; color: #111827; }
+    .subpanel-body { flex: 1; overflow-y: auto; }
+    .subpanel-note { margin: 14px 16px 4px; padding: 9px 13px; background: #f5f3ff; border-left: 3px solid #7c3aed; border-radius: 6px; font-size: 12.5px; color: #374151; }
+    .subpanel-note .sp-note-label { font-size: 10px; font-weight: 700; color: #7c3aed; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
+    .subpanel-table { font-size: 12.5px; }
+    .subpanel-table th { font-size: 11px; }
+    .subpanel-table td { padding: 8px 14px; }
+    .subpanel-total { padding: 10px 20px; text-align: right; font-weight: 700; font-size: 13px; color: #111827; border-top: 2px solid #e2e4e9; background: #f9fafb; }
+    .subpanel-footer { padding: 14px 20px; border-top: 1px solid #f0f2f5; flex-shrink: 0; }
+    .btn-compare-full { width: 100%; padding: 9px; border-radius: 7px; font-size: 13px; font-weight: 500; border: 1px solid #d1d5db; background: #fff; color: #374151; cursor: pointer; }
+    .btn-compare-full:hover { background: #f3f4f6; }
+
+    /* DOC HISTORY */
+    .doc-list { background: #fff; border: 1px solid #e2e4e9; border-radius: 10px; overflow: hidden; }
+    .doc-row { display: flex; align-items: center; gap: 16px; padding: 14px 20px; border-bottom: 1px solid #f7f8fa; }
+    .doc-row:last-child { border-bottom: none; }
+    .doc-icon { font-size: 20px; }
+    .doc-info { flex: 1; }
+    .doc-name { font-size: 13px; font-weight: 500; color: #1a1a1a; margin-bottom: 2px; }
+    .doc-meta { font-size: 12px; color: #9ca3af; }
+    .doc-download { font-size: 12.5px; color: #3b5bdb; text-decoration: none; font-weight: 500; }
+    .doc-download:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <span class="app-logo">Fieldwork</span>
+    <span class="topbar-divider"></span>
+    <nav class="breadcrumb">
+      <a href="#">Projects</a>
+      <span class="sep">›</span>
+      <span class="current">Deck Renovation — 412 Maple St</span>
+    </nav>
+  </div>
+  <div class="topbar-right">
+    <div class="user-avatar">SK</div>
+  </div>
+</div>
+
+<!-- PROJECT HEADER -->
+<div class="project-header">
+  <div class="project-title-row">
+    <h1>Deck Renovation</h1>
+    <span class="status-badge status-in-progress">In Progress</span>
+  </div>
+  <div class="project-meta">412 Maple St, Nashville, TN · Client: Johnson Family</div>
+</div>
+
+<!-- TAB BAR -->
+<div class="tab-bar">
+  <div class="tab-bar-inner">
+    <button class="tab-btn" data-tab="items">Items</button>
+    <button class="tab-btn" data-tab="fees">Fees</button>
+    <button class="tab-btn active" data-tab="estimated">Estimated</button>
+    <button class="tab-btn" data-tab="dochistory">Document History</button>
+  </div>
+</div>
+
+<!-- TAB: ITEMS -->
+<div class="tab-content" id="tab-items">
+  <div class="tab-inner">
+    <div class="panel">
+      <table>
+        <thead><tr><th>Type</th><th>Item Name</th><th>Status</th><th>Assignee</th><th>Due Date</th></tr></thead>
+        <tbody>
+          <tr class="room-divider"><td colspan="5">Master Bathroom</td></tr>
+          <tr class="item-row"><td><span class="type-badge type-labor">Labor</span></td><td>Mirror installation</td><td><span class="st-badge st-completed">Completed</span></td><td>Sarah K.</td><td>Mar 15, 2026</td></tr>
+          <tr class="item-row"><td><span class="type-badge type-material">Material</span></td><td>Vanity hardware install</td><td><span class="st-badge st-completed">Completed</span></td><td>Sarah K.</td><td>Mar 15, 2026</td></tr>
+          <tr class="item-row"><td><span class="type-badge type-labor">Labor</span></td><td>Floor tile work</td><td><span class="st-badge st-completed">Completed</span></td><td>Mike T.</td><td>Mar 20, 2026</td></tr>
+          <tr class="item-row"><td><span class="type-badge type-material">Material</span></td><td>Shower fixtures</td><td><span class="st-badge st-in-progress">In Progress</span></td><td>Mike T.</td><td>Apr 5, 2026</td></tr>
+          <tr class="room-divider"><td colspan="5">Kitchen</td></tr>
+          <tr class="item-row"><td><span class="type-badge type-material">Material</span></td><td>Cabinet hardware (set)</td><td><span class="st-badge st-completed">Completed</span></td><td>Sarah K.</td><td>Mar 22, 2026</td></tr>
+          <tr class="item-row"><td><span class="type-badge type-labor">Labor</span></td><td>Countertop installation</td><td><span class="st-badge st-completed">Completed</span></td><td>Mike T.</td><td>Mar 28, 2026</td></tr>
+          <tr class="item-row"><td><span class="type-badge type-material">Material</span></td><td>Under-cabinet lighting</td><td><span class="st-badge st-completed">Completed</span></td><td>Sarah K.</td><td>Apr 1, 2026</td></tr>
+          <tr class="item-row"><td><span class="type-badge type-labor">Labor</span></td><td>Backsplash tile installation</td><td><span class="st-badge st-pending">Pending</span></td><td>—</td><td>Apr 10, 2026</td></tr>
+          <tr class="room-divider"><td colspan="5">Living Room</td></tr>
+          <tr class="item-row"><td><span class="type-badge type-labor">Labor</span></td><td>Crown molding install</td><td><span class="st-badge st-completed">Completed</span></td><td>Mike T.</td><td>Mar 25, 2026</td></tr>
+          <tr class="item-row"><td><span class="type-badge type-labor">Labor</span></td><td>Interior painting</td><td><span class="st-badge st-completed">Completed</span></td><td>Sarah K.</td><td>Mar 30, 2026</td></tr>
+          <tr class="item-row"><td><span class="type-badge type-material">Material</span></td><td>Hardwood flooring</td><td><span class="st-badge st-in-progress">In Progress</span></td><td>Mike T.</td><td>Apr 8, 2026</td></tr>
+          <tr class="item-row"><td><span class="type-badge type-labor">Labor</span></td><td>Trim and baseboard</td><td><span class="st-badge st-pending">Pending</span></td><td>—</td><td>Apr 15, 2026</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- TAB: FEES -->
+<div class="tab-content" id="tab-fees">
+  <div class="tab-inner">
+    <div class="panel">
+      <table>
+        <thead><tr><th>Fee Name</th><th class="num">Amount</th></tr></thead>
+        <tbody>
+          <tr><td>Design Fee</td><td class="num">$500.00</td></tr>
+          <tr><td>Project Management</td><td class="num">$350.00</td></tr>
+          <tr><td>Permit Filing</td><td class="num">$125.00</td></tr>
+        </tbody>
+        <tfoot><tr class="total-row"><td>Total Fees</td><td class="num">$975.00</td></tr></tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- TAB: ESTIMATED -->
+<div class="tab-content active" id="tab-estimated">
+
+  <!-- Stage switcher -->
+  <div class="stage-switcher" id="stage-switcher"></div>
+
+  <!-- Action bar -->
+  <div class="estimated-actions">
+    <div class="actions-left">
+      <button class="btn btn-secondary">↓ Download PDF</button>
+      <button class="btn btn-secondary">✉ Send to Client</button>
+      <div class="published-link-bar" id="published-link-bar" style="display:none;">
+        <span class="link-label">Client link:</span>
+        <span class="link-url-text" id="link-url-text"></span>
+        <button class="copy-btn" id="btn-copy-link">Copy</button>
+      </div>
+    </div>
+    <div class="actions-right">
+      <button class="btn btn-secondary" id="btn-open-history">Version History</button>
+      <button class="btn btn-primary" id="btn-open-publish">Publish</button>
+    </div>
+  </div>
+
+  <div class="estimated-body">
+    <!-- LEFT: Completed items -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Completed Items</span>
+        <span class="panel-subtitle">Select to include in estimate</span>
+      </div>
+      <table>
+        <thead><tr><th class="check-col"></th><th>Type</th><th>Item Name</th></tr></thead>
+        <tbody id="items-tbody"></tbody>
+      </table>
+    </div>
+
+    <!-- RIGHT: Estimate -->
+    <div class="panel">
+      <div class="compare-banner" id="compare-banner"></div>
+      <div class="panel-header">
+        <span class="panel-title">Estimate</span>
+        <span class="panel-subtitle" id="estimate-count">0 items selected</span>
+      </div>
+      <div id="estimate-empty" class="empty-estimate">
+        <div class="empty-icon">📋</div>
+        <div>No items selected yet.<br>Check items on the left to add them.</div>
+      </div>
+      <table id="estimate-table" style="display:none;">
+        <thead><tr><th>Type</th><th>Description</th><th class="num">Qty</th><th class="num">Unit Price</th><th class="num">Amount</th></tr></thead>
+        <tbody id="estimate-tbody"></tbody>
+        <tfoot><tr class="total-row"><td colspan="4" style="text-align:right;">Total</td><td class="num" id="builder-total">$0.00</td></tr></tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- TAB: DOCUMENT HISTORY -->
+<div class="tab-content" id="tab-dochistory">
+  <div class="tab-inner">
+    <div class="doc-list">
+      <div class="doc-row"><div class="doc-icon">📄</div><div class="doc-info"><div class="doc-name">Estimate 1: 2025 — v2</div><div class="doc-meta">PDF · Sent March 28, 2026</div></div><a href="#" class="doc-download">↓ Download</a></div>
+      <div class="doc-row"><div class="doc-icon">📄</div><div class="doc-info"><div class="doc-name">Estimate 1: 2025 — v1</div><div class="doc-meta">PDF · Sent March 20, 2026</div></div><a href="#" class="doc-download">↓ Download</a></div>
+      <div class="doc-row"><div class="doc-icon">📄</div><div class="doc-info"><div class="doc-name">Estimate 2: 2026 — v1</div><div class="doc-meta">PDF · Sent January 10, 2026</div></div><a href="#" class="doc-download">↓ Download</a></div>
+      <div class="doc-row"><div class="doc-icon">📋</div><div class="doc-info"><div class="doc-name">Purchase Order #001</div><div class="doc-meta">PDF · Created March 15, 2026</div></div><a href="#" class="doc-download">↓ Download</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- PUBLISH MODAL -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-header"><h2>Publish New Version</h2><p>Your client's link will update immediately with the latest estimate.</p></div>
+    <div class="modal-body">
+      <label for="version-note">Version note <span style="color:#9ca3af;font-weight:400;">(optional)</span></label>
+      <textarea id="version-note" placeholder="e.g. Added kitchen items, updated bathroom pricing"></textarea>
+    </div>
+    <div class="modal-footer" id="modal-footer-actions">
+      <button class="btn btn-secondary" id="btn-cancel-modal">Cancel</button>
+      <button class="btn btn-primary" id="btn-confirm-publish">Publish &amp; Get Link</button>
+    </div>
+    <div class="link-result" id="link-result">
+      <p>✓ Published! Share this link with your client:</p>
+      <div class="link-box"><span class="link-url" id="link-url-modal"></span><button id="btn-copy-modal">Copy</button></div>
+      <a href="#" class="preview-link" id="btn-preview-client">Preview as client →</a>
+    </div>
+  </div>
+</div>
+
+<!-- NEW ESTIMATE MODAL -->
+<div class="modal-overlay" id="modal-new-stage">
+  <div class="modal">
+    <div class="modal-header"><h2>New Estimate</h2><p>Create a new estimate for a different phase or year of this project.</p></div>
+    <div class="modal-body">
+      <label for="new-stage-name">Estimate name</label>
+      <input type="text" id="new-stage-name" placeholder="e.g. Estimate 3: 2027" />
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="btn-cancel-new-stage">Cancel</button>
+      <button class="btn btn-primary" id="btn-confirm-new-stage">Create Estimate</button>
+    </div>
+  </div>
+</div>
+
+<!-- DRAWER -->
+<div class="drawer-backdrop" id="drawer-backdrop"></div>
+<div class="drawer" id="history-drawer">
+  <div class="drawer-header">
+    <span class="drawer-title" id="drawer-title">Version History</span>
+    <button class="drawer-close" id="btn-close-drawer">×</button>
+  </div>
+  <div class="drawer-list" id="drawer-list"></div>
+  <div class="drawer-subpanel" id="drawer-subpanel">
+    <div class="subpanel-header">
+      <button class="btn-back" id="btn-back-to-list">‹</button>
+      <span class="subpanel-title" id="subpanel-title"></span>
+    </div>
+    <div class="subpanel-body" id="subpanel-content"></div>
+    <div class="subpanel-footer">
+      <button class="btn-compare-full" id="btn-compare-version">Compare with current →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Tab switching
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  // ── Data ─────────────────────────────────────────────────────────────────
+
+  // Project-level items (all completed items available for any estimate)
+  const projectItems = [
+    { id:1, room:'Master Bathroom', type:'Labor',    name:'Mirror installation',    desc:'Professional mirror installation with mounting hardware', qty:2,  price:85.00  },
+    { id:2, room:'Master Bathroom', type:'Material', name:'Vanity hardware install', desc:'Premium vanity hardware package with installation',        qty:1,  price:340.00 },
+    { id:3, room:'Master Bathroom', type:'Labor',    name:'Floor tile work',         desc:'Ceramic floor tile installation with grout and seal',      qty:6,  price:110.00 },
+    { id:4, room:'Kitchen',         type:'Material', name:'Cabinet hardware (set)',   desc:'Brushed nickel cabinet knobs and pulls (full set)',        qty:3,  price:95.00  },
+    { id:5, room:'Kitchen',         type:'Labor',    name:'Countertop installation',  desc:'Quartz countertop installation with edge finishing',       qty:8,  price:125.00 },
+    { id:6, room:'Kitchen',         type:'Material', name:'Under-cabinet lighting',   desc:'LED under-cabinet strip lighting with dimmer',             qty:1,  price:280.00 },
+    { id:7, room:'Living Room',     type:'Labor',    name:'Crown molding install',    desc:'Crown molding installation and finish painting',           qty:14, price:45.00  },
+    { id:8, room:'Living Room',     type:'Labor',    name:'Interior painting',        desc:'Two-coat interior wall and ceiling painting',              qty:20, price:55.00  },
+  ];
+
+  // Seed data: two pre-built stages
+  const STAGES_SEED = [
+    {
+      id: 's1',
+      label: 'Estimate 1: 2025',
+      clientLinkId: 'e1042-s1',
+      sessionPublished: false,
+      items: [
+        { id:1, room:'Master Bathroom', type:'Labor',    name:'Mirror installation',    desc:'Professional mirror installation with mounting hardware', qty:2,  price:85.00  },
+        { id:2, room:'Master Bathroom', type:'Material', name:'Vanity hardware install', desc:'Premium vanity hardware package with installation',        qty:1,  price:340.00 },
+        { id:3, room:'Master Bathroom', type:'Labor',    name:'Floor tile work',         desc:'Ceramic floor tile installation with grout and seal',      qty:6,  price:110.00 },
+        { id:4, room:'Kitchen',         type:'Material', name:'Cabinet hardware (set)',   desc:'Brushed nickel cabinet knobs and pulls (full set)',        qty:3,  price:95.00  },
+        { id:5, room:'Kitchen',         type:'Labor',    name:'Countertop installation',  desc:'Quartz countertop installation with edge finishing',       qty:8,  price:125.00 },
+      ],
+      fees: [
+        { id:'f1', name:'Design Fee',         amount:500.00 },
+        { id:'f2', name:'Project Management', amount:350.00 },
+        { id:'f3', name:'Permit Filing',      amount:125.00 },
+      ],
+      versionHistory: [
+        { version:1, timestamp:'March 20, 2026 at 9:15 AM', note:'Initial estimate — bathroom only',
+          items:[
+            {id:1,room:'Master Bathroom',type:'Labor',   desc:'Mirror installation and mounting',        qty:2,price:75.00},
+            {id:2,room:'Master Bathroom',type:'Material',desc:'Vanity hardware package',                 qty:1,price:320.00},
+            {id:3,room:'Master Bathroom',type:'Labor',   desc:'Ceramic floor tile installation',         qty:6,price:95.00},
+          ],
+          fees:[{id:'f1',name:'Design Fee',amount:500.00},{id:'f2',name:'Project Management',amount:350.00}]
+        },
+        { version:2, timestamp:'March 28, 2026 at 11:00 AM', note:'Added kitchen items, updated bathroom pricing',
+          items:[
+            {id:1,room:'Master Bathroom',type:'Labor',   desc:'Professional mirror installation with mounting hardware', qty:2,price:80.00},
+            {id:2,room:'Master Bathroom',type:'Material',desc:'Premium vanity hardware package with installation',       qty:1,price:330.00},
+            {id:3,room:'Master Bathroom',type:'Labor',   desc:'Ceramic floor tile installation with grout and seal',    qty:6,price:100.00},
+            {id:4,room:'Kitchen',        type:'Material',desc:'Brushed nickel cabinet knobs and pulls (full set)',      qty:3,price:90.00},
+            {id:5,room:'Kitchen',        type:'Labor',   desc:'Quartz countertop installation with edge finishing',     qty:8,price:115.00},
+          ],
+          fees:[{id:'f1',name:'Design Fee',amount:500.00},{id:'f2',name:'Project Management',amount:350.00},{id:'f3',name:'Permit Filing',amount:125.00}]
+        }
+      ]
+    },
+    {
+      id: 's2',
+      label: 'Estimate 2: 2026',
+      clientLinkId: 'e1042-s2',
+      sessionPublished: false,
+      items: [
+        { id:7, room:'Living Room', type:'Labor', name:'Crown molding install', desc:'Crown molding installation and finish painting', qty:14, price:45.00 },
+        { id:8, room:'Living Room', type:'Labor', name:'Interior painting',     desc:'Two-coat interior wall and ceiling painting',   qty:20, price:55.00 },
+      ],
+      fees: [
+        { id:'f1', name:'Design Fee', amount:650.00 },
+      ],
+      versionHistory: [
+        { version:1, timestamp:'January 10, 2026 at 2:30 PM', note:'Initial estimate for 2026 phase — living room',
+          items:[
+            {id:7,room:'Living Room',type:'Labor',desc:'Crown molding installation and finish painting', qty:14,price:42.00},
+            {id:8,room:'Living Room',type:'Labor',desc:'Two-coat interior wall painting',               qty:20,price:50.00},
+          ],
+          fees:[{id:'f1',name:'Design Fee',amount:600.00}]
+        }
+      ]
+    }
+  ];
+
+  // Load or seed stages from localStorage
+  let stages = JSON.parse(localStorage.getItem('projectStages') || 'null');
+  if (!stages) {
+    stages = JSON.parse(JSON.stringify(STAGES_SEED)); // deep copy
+    saveStages();
+  } else {
+    // sessionPublished is UI-only state; reset on load
+    stages.forEach(s => { s.sessionPublished = false; });
+  }
+
+  let activeStageId = stages[0].id;
+
+  function getActiveStage() { return stages.find(s => s.id === activeStageId); }
+
+  function saveStages() {
+    const toSave = stages.map(s => {
+      const { sessionPublished, ...rest } = s;
+      return rest;
+    });
+    localStorage.setItem('projectStages', JSON.stringify(toSave));
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+
+  function fmt(n) { return '$' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+  function typeBadge(t) { const c = { Labor:'type-labor', Material:'type-material', Rental:'type-rental' }[t] || ''; return `<span class="type-badge ${c}">${t}</span>`; }
+  function groupByRoom(items) { const r = {}; items.forEach(i => { if (!r[i.room]) r[i.room] = []; r[i.room].push(i); }); return r; }
+
+  // ── Stage switcher ────────────────────────────────────────────────────────
+
+  function renderStageSwitcher() {
+    const html = `
+      <span class="stage-label">Estimate</span>
+      ${stages.map(s => `<button class="stage-pill ${s.id === activeStageId ? 'active' : ''}" data-stage="${s.id}">${s.label}</button>`).join('')}
+      <button class="btn-add-stage" id="btn-add-stage">+ New Estimate</button>`;
+    document.getElementById('stage-switcher').innerHTML = html;
+    document.querySelectorAll('.stage-pill').forEach(pill => {
+      pill.addEventListener('click', () => switchStage(pill.dataset.stage));
+    });
+    document.getElementById('btn-add-stage').addEventListener('click', openNewStageModal);
+  }
+
+  function switchStage(id) {
+    if (id === activeStageId) return;
+    activeStageId = id;
+    if (compareMode) exitCompare();
+    renderStageSwitcher();
+    renderItemsTable();
+    renderEstimatePanel();
+    updateActionBar();
+    // Update drawer title if open
+    document.getElementById('drawer-title').textContent = `Version History — ${getActiveStage().label}`;
+  }
+
+  function updateActionBar() {
+    const stage = getActiveStage();
+    const linkBar = document.getElementById('published-link-bar');
+    const linkUrlText = document.getElementById('link-url-text');
+    const linkUrlModal = document.getElementById('link-url-modal');
+    const url = `estimates.app/view/${stage.clientLinkId}`;
+    if (linkUrlText) linkUrlText.textContent = url;
+    if (linkUrlModal) linkUrlModal.textContent = url;
+    linkBar.style.display = stage.sessionPublished ? 'flex' : 'none';
+  }
+
+  // ── Left panel ────────────────────────────────────────────────────────────
+
+  function renderItemsTable() {
+    const stage = getActiveStage();
+    const selectedIds = new Set(stage.items.map(i => i.id));
+    const rooms = groupByRoom(projectItems);
+    let html = '';
+    Object.entries(rooms).forEach(([room, items]) => {
+      html += `<tr class="room-divider"><td colspan="3">${room}</td></tr>`;
+      items.forEach(i => {
+        html += `<tr class="item-row"><td class="check-col"><input type="checkbox" data-id="${i.id}" ${selectedIds.has(i.id) ? 'checked' : ''}></td><td>${typeBadge(i.type)}</td><td>${i.name}</td></tr>`;
+      });
+    });
+    document.getElementById('items-tbody').innerHTML = html;
+    document.getElementById('items-tbody').querySelectorAll('input[type="checkbox"]').forEach(cb => {
+      cb.addEventListener('change', e => {
+        const s = getActiveStage();
+        const itemId = parseInt(e.target.dataset.id);
+        if (e.target.checked) {
+          // Add a copy of the project item to this stage's items
+          const source = projectItems.find(i => i.id === itemId);
+          if (source && !s.items.find(i => i.id === itemId)) {
+            s.items.push({ ...source });
+          }
+        } else {
+          s.items = s.items.filter(i => i.id !== itemId);
+        }
+        if (!compareMode) renderEstimatePanel();
+      });
+    });
+  }
+
+  // ── Right panel ───────────────────────────────────────────────────────────
+
+  let compareMode = false;
+
+  function renderEstimatePanel() {
+    const stage = getActiveStage();
+    const countEl = document.getElementById('estimate-count');
+    const totalEl = document.getElementById('builder-total');
+    const empty = document.getElementById('estimate-empty');
+    const table = document.getElementById('estimate-table');
+    const tbody = document.getElementById('estimate-tbody');
+
+    countEl.textContent = `${stage.items.length} item${stage.items.length !== 1 ? 's' : ''} selected`;
+
+    if (!stage.items.length) { empty.style.display = ''; table.style.display = 'none'; totalEl.textContent = '$0.00'; return; }
+    empty.style.display = 'none'; table.style.display = '';
+
+    const rooms = groupByRoom(stage.items);
+    let total = 0, html = '';
+
+    Object.entries(rooms).forEach(([room, items]) => {
+      html += `<tr class="room-divider"><td colspan="5">${room}</td></tr>`;
+      items.forEach(item => {
+        const amt = item.qty * item.price; total += amt;
+        html += `<tr>
+          <td>${typeBadge(item.type)}</td>
+          <td><span class="editable-cell" contenteditable="true" data-id="${item.id}" data-field="desc">${item.desc}</span></td>
+          <td class="num">${item.qty}</td>
+          <td class="num"><span class="editable-cell" contenteditable="true" data-id="${item.id}" data-field="price">${fmt(item.price)}</span></td>
+          <td class="num amount-cell" data-id="${item.id}">${fmt(amt)}</td>
+        </tr>`;
+      });
+    });
+
+    html += `<tr class="room-divider fees-divider"><td colspan="5">Fees</td></tr>`;
+    stage.fees.forEach(f => { total += f.amount; html += `<tr class="fee-row"><td colspan="4">${f.name}</td><td class="num">${fmt(f.amount)}</td></tr>`; });
+
+    tbody.innerHTML = html;
+    totalEl.textContent = fmt(total);
+
+    tbody.querySelectorAll('.editable-cell').forEach(cell => {
+      cell.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); cell.blur(); } });
+      cell.addEventListener('blur', () => {
+        const s = getActiveStage();
+        const id = parseInt(cell.dataset.id), field = cell.dataset.field;
+        const item = s.items.find(i => i.id === id);
+        if (!item) return;
+        if (field === 'desc') { item.desc = cell.textContent.trim() || item.desc; cell.textContent = item.desc; }
+        else if (field === 'price') {
+          const p = parseFloat(cell.textContent.replace(/[^0-9.]/g, ''));
+          if (!isNaN(p) && p >= 0) item.price = p;
+          cell.textContent = fmt(item.price);
+          const ac = tbody.querySelector(`.amount-cell[data-id="${id}"]`);
+          if (ac) ac.textContent = fmt(item.qty * item.price);
+          let t = 0; s.items.forEach(i => { t += i.qty * i.price; }); s.fees.forEach(f => { t += f.amount; }); totalEl.textContent = fmt(t);
+        }
+      });
+    });
+  }
+
+  // ── Compare mode ──────────────────────────────────────────────────────────
+
+  let activeCompareVersion = null;
+
+  function startCompare(v) {
+    compareMode = true; activeCompareVersion = v; closeDrawer();
+    const stage = getActiveStage();
+    const banner = document.getElementById('compare-banner');
+    banner.innerHTML = `<span>Comparing <strong>v${v.version}</strong> → <strong>Current draft</strong></span><button class="btn-exit-compare" id="btn-exit-compare">Exit compare</button>`;
+    banner.classList.add('visible');
+    document.getElementById('btn-exit-compare').addEventListener('click', exitCompare);
+
+    const currItems = stage.items;
+    const pastById = {}, currById = {};
+    v.items.forEach(i => { pastById[i.id] = i; }); currItems.forEach(i => { currById[i.id] = i; });
+    const allRooms = [...new Set([...v.items.map(i => i.room), ...currItems.map(i => i.room)])];
+
+    let total = 0, html = '';
+    allRooms.forEach(room => {
+      const pRoomItems = v.items.filter(i => i.room === room);
+      const cRoomItems = currItems.filter(i => i.room === room);
+      if (!pRoomItems.length && !cRoomItems.length) return;
+      html += `<tr class="room-divider"><td colspan="5">${room}</td></tr>`;
+      const allIds = [...new Set([...pRoomItems.map(i => i.id), ...cRoomItems.map(i => i.id)])];
+      allIds.forEach(id => {
+        const past = pastById[id], curr = currById[id];
+        if (past && !curr) {
+          html += `<tr class="diff-removed"><td>${typeBadge(past.type)}</td><td><span class="removed-val">${past.desc}</span><span class="diff-label">Removed</span></td><td class="num"><span class="removed-val">${past.qty}</span></td><td class="num"><span class="removed-val">${fmt(past.price)}</span></td><td class="num"><span class="removed-val">${fmt(past.qty * past.price)}</span></td></tr>`;
+        } else if (!past && curr) {
+          const amt = curr.qty * curr.price; total += amt;
+          html += `<tr class="diff-added"><td>${typeBadge(curr.type)}</td><td>${curr.desc}<span class="diff-label">Added</span></td><td class="num">${curr.qty}</td><td class="num">${fmt(curr.price)}</td><td class="num">${fmt(amt)}</td></tr>`;
+        } else {
+          const amt = curr.qty * curr.price; total += amt;
+          const pc = past.price !== curr.price, dc = past.desc !== curr.desc, qc = past.qty !== curr.qty;
+          html += `<tr><td>${typeBadge(curr.type)}</td><td class="${dc ? 'diff-cell-changed' : ''}">${curr.desc}${dc ? `<span class="old-val">${past.desc}</span>` : ''}</td><td class="num ${qc ? 'diff-cell-changed' : ''}">${curr.qty}${qc ? `<span class="old-val">${past.qty}</span>` : ''}</td><td class="num ${pc ? 'diff-cell-changed' : ''}">${fmt(curr.price)}${pc ? `<span class="old-val">${fmt(past.price)}</span>` : ''}</td><td class="num">${fmt(amt)}</td></tr>`;
+        }
+      });
+    });
+
+    // Fees diff
+    const vFees = v.fees || [], pastFeeById = {};
+    vFees.forEach(f => { pastFeeById[f.id] = f; });
+    const allFeeIds = [...new Set([...vFees.map(f => f.id), ...stage.fees.map(f => f.id)])];
+    html += `<tr class="room-divider fees-divider"><td colspan="5">Fees</td></tr>`;
+    allFeeIds.forEach(id => {
+      const pf = pastFeeById[id], cf = stage.fees.find(f => f.id === id);
+      if (pf && !cf) html += `<tr class="diff-removed"><td colspan="4"><span class="removed-val">${pf.name}</span><span class="diff-label">Removed</span></td><td class="num"><span class="removed-val">${fmt(pf.amount)}</span></td></tr>`;
+      else if (!pf && cf) { total += cf.amount; html += `<tr class="diff-added"><td colspan="4">${cf.name}<span class="diff-label">Added</span></td><td class="num">${fmt(cf.amount)}</td></tr>`; }
+      else if (pf && cf) { total += cf.amount; const ac = pf.amount !== cf.amount; html += `<tr class="fee-row"><td colspan="4">${cf.name}</td><td class="num ${ac ? 'diff-cell-changed' : ''}">${fmt(cf.amount)}${ac ? `<span class="old-val">${fmt(pf.amount)}</span>` : ''}</td></tr>`; }
+    });
+
+    document.getElementById('estimate-empty').style.display = 'none';
+    document.getElementById('estimate-table').style.display = '';
+    document.getElementById('estimate-tbody').innerHTML = html;
+    document.getElementById('builder-total').textContent = fmt(total);
+    document.getElementById('estimate-count').textContent = 'Compare mode';
+  }
+
+  function exitCompare() { compareMode = false; document.getElementById('compare-banner').classList.remove('visible'); renderEstimatePanel(); }
+
+  // ── Drawer ────────────────────────────────────────────────────────────────
+
+  function openDrawer() {
+    const stage = getActiveStage();
+    document.getElementById('drawer-title').textContent = `Version History — ${stage.label}`;
+    document.getElementById('history-drawer').classList.add('open');
+    document.getElementById('drawer-backdrop').classList.add('open');
+    renderDrawerList();
+  }
+  function closeDrawer() { document.getElementById('history-drawer').classList.remove('open'); document.getElementById('drawer-backdrop').classList.remove('open'); closeSubpanel(); }
+  function renderDrawerList() {
+    const stage = getActiveStage();
+    const history = stage.versionHistory;
+    const latest = history[history.length - 1];
+    document.getElementById('drawer-list').innerHTML = [...history].reverse().map(v => {
+      const isCurr = v.version === latest.version;
+      return `<div class="version-item ${isCurr ? 'is-current' : ''}" data-version="${v.version}">
+        <span class="v-dot ${isCurr ? 'filled' : 'empty'}"></span>
+        <div class="v-info">
+          <div class="v-label"><span class="v-num">v${v.version}</span>${isCurr ? '<span class="v-badge">Latest</span>' : ''}</div>
+          <div class="v-date">${v.timestamp}</div>
+          ${v.note ? `<div class="v-note">"${v.note}"</div>` : ''}
+        </div>
+        ${!isCurr ? '<span class="v-chevron">›</span>' : ''}
+      </div>`;
+    }).join('');
+    document.getElementById('drawer-list').querySelectorAll('.version-item:not(.is-current)').forEach(el => {
+      el.addEventListener('click', () => { openSubpanel(stage.versionHistory.find(v => v.version === parseInt(el.dataset.version))); });
+    });
+  }
+
+  let activeSubpanelVersion = null;
+  function openSubpanel(v) {
+    activeSubpanelVersion = v;
+    document.getElementById('drawer-subpanel').classList.add('open');
+    document.getElementById('subpanel-title').textContent = `v${v.version} — ${v.timestamp.split(' at ')[0]}`;
+    const rooms = groupByRoom(v.items);
+    let total = 0, rows = '';
+    Object.entries(rooms).forEach(([room, items]) => {
+      rows += `<tr class="room-divider"><td colspan="5">${room}</td></tr>`;
+      items.forEach(i => { const a = i.qty * i.price; total += a; rows += `<tr><td>${typeBadge(i.type)}</td><td>${i.desc}</td><td class="num">${i.qty}</td><td class="num">${fmt(i.price)}</td><td class="num">${fmt(a)}</td></tr>`; });
+    });
+    const vFees = v.fees || [];
+    if (vFees.length) { rows += `<tr class="room-divider fees-divider"><td colspan="5">Fees</td></tr>`; vFees.forEach(f => { total += f.amount; rows += `<tr class="fee-row"><td colspan="4">${f.name}</td><td class="num">${fmt(f.amount)}</td></tr>`; }); }
+    document.getElementById('subpanel-content').innerHTML = `
+      ${v.note ? `<div class="subpanel-note"><div class="sp-note-label">Version note</div>${v.note}</div>` : ''}
+      <table class="subpanel-table"><thead><tr><th>Type</th><th>Description</th><th class="num">Qty</th><th class="num">Price</th><th class="num">Amount</th></tr></thead><tbody>${rows}</tbody></table>
+      <div class="subpanel-total">Total: ${fmt(total)}</div>`;
+  }
+  function closeSubpanel() { document.getElementById('drawer-subpanel').classList.remove('open'); activeSubpanelVersion = null; }
+
+  // ── New Stage modal ───────────────────────────────────────────────────────
+
+  const newStageOverlay = document.getElementById('modal-new-stage');
+  function openNewStageModal() {
+    document.getElementById('new-stage-name').value = `Estimate ${stages.length + 1}: ${new Date().getFullYear() + 1}`;
+    newStageOverlay.classList.add('open');
+    setTimeout(() => document.getElementById('new-stage-name').select(), 50);
+  }
+  document.getElementById('btn-cancel-new-stage').addEventListener('click', () => newStageOverlay.classList.remove('open'));
+  newStageOverlay.addEventListener('click', e => { if (e.target === newStageOverlay) newStageOverlay.classList.remove('open'); });
+  document.getElementById('btn-confirm-new-stage').addEventListener('click', () => {
+    const label = document.getElementById('new-stage-name').value.trim();
+    if (!label) return;
+    const n = stages.length + 1;
+    const newStage = {
+      id: `s${n}`,
+      label,
+      clientLinkId: `e1042-s${n}`,
+      sessionPublished: false,
+      items: [],
+      fees: JSON.parse(JSON.stringify(stages[0].fees)), // copy fees from Stage 1 as default
+      versionHistory: []
+    };
+    stages.push(newStage);
+    saveStages();
+    newStageOverlay.classList.remove('open');
+    switchStage(newStage.id);
+  });
+
+  // ── Publish modal ─────────────────────────────────────────────────────────
+
+  const overlay = document.getElementById('modal-overlay');
+  const linkResult = document.getElementById('link-result');
+  const footerActions = document.getElementById('modal-footer-actions');
+
+  document.getElementById('btn-open-history').addEventListener('click', openDrawer);
+  document.getElementById('btn-close-drawer').addEventListener('click', closeDrawer);
+  document.getElementById('drawer-backdrop').addEventListener('click', closeDrawer);
+  document.getElementById('btn-back-to-list').addEventListener('click', closeSubpanel);
+  document.getElementById('btn-compare-version').addEventListener('click', () => { if (activeSubpanelVersion) startCompare(activeSubpanelVersion); });
+
+  document.getElementById('btn-open-publish').addEventListener('click', () => {
+    linkResult.classList.remove('visible'); footerActions.style.display = 'flex';
+    document.getElementById('version-note').value = '';
+    overlay.classList.add('open');
+  });
+  document.getElementById('btn-cancel-modal').addEventListener('click', () => overlay.classList.remove('open'));
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
+
+  document.getElementById('btn-confirm-publish').addEventListener('click', () => {
+    const stage = getActiveStage();
+    const note = document.getElementById('version-note').value;
+    const now = new Date();
+    const ts = now.toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' }) + ' at ' + now.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' });
+    const nextNum = stage.versionHistory.length ? stage.versionHistory[stage.versionHistory.length - 1].version + 1 : 1;
+    stage.versionHistory.push({
+      version: nextNum, timestamp: ts, note,
+      items: stage.items.map(i => ({ id:i.id, room:i.room, type:i.type, desc:i.desc, qty:i.qty, price:i.price })),
+      fees: stage.fees.map(f => ({ ...f }))
+    });
+    stage.sessionPublished = true;
+    saveStages();
+    updateActionBar();
+    const url = `estimates.app/view/${stage.clientLinkId}`;
+    document.getElementById('link-url-modal').textContent = url;
+    footerActions.style.display = 'none'; linkResult.classList.add('visible');
+  });
+
+  document.getElementById('btn-copy-modal').addEventListener('click', function () {
+    const url = `estimates.app/view/${getActiveStage().clientLinkId}`;
+    navigator.clipboard?.writeText(url).catch(() => {});
+    this.textContent = 'Copied!'; setTimeout(() => { this.textContent = 'Copy'; }, 1800);
+  });
+  document.getElementById('btn-copy-link').addEventListener('click', function () {
+    const url = `estimates.app/view/${getActiveStage().clientLinkId}`;
+    navigator.clipboard?.writeText(url).catch(() => {});
+    this.textContent = 'Copied!'; setTimeout(() => { this.textContent = 'Copy'; }, 1800);
+  });
+  document.getElementById('btn-preview-client').addEventListener('click', e => {
+    e.preventDefault(); overlay.classList.remove('open');
+    window.open(`client.html?stage=${activeStageId}`, '_blank');
+  });
+
+  // ── Init ──────────────────────────────────────────────────────────────────
+
+  renderStageSwitcher();
+  renderItemsTable();
+  renderEstimatePanel();
+  updateActionBar();
+</script>
+</body>
+</html>
