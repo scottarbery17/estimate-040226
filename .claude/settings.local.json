@@ -1,8 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(open \"/Users/scottarbery/Desktop/Estimate preview/index.html\")",
-      "Bash(open \"/Users/scottarbery/Desktop/Estimate preview/project.html\")"
-    ]
-  }
-}
