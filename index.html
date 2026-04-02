@@ -180,16 +180,21 @@
     .btn-compare-full { width: 100%; padding: 9px; border-radius: 7px; font-size: 13px; font-weight: 500; border: 1px solid #d1d5db; background: #fff; color: #374151; cursor: pointer; }
     .btn-compare-full:hover { background: #f3f4f6; }
 
-    /* DOC HISTORY */
-    .doc-list { background: #fff; border: 1px solid #e2e4e9; border-radius: 10px; overflow: hidden; }
-    .doc-row { display: flex; align-items: center; gap: 16px; padding: 14px 20px; border-bottom: 1px solid #f7f8fa; }
-    .doc-row:last-child { border-bottom: none; }
-    .doc-icon { font-size: 20px; }
-    .doc-info { flex: 1; }
-    .doc-name { font-size: 13px; font-weight: 500; color: #1a1a1a; margin-bottom: 2px; }
-    .doc-meta { font-size: 12px; color: #9ca3af; }
-    .doc-download { font-size: 12.5px; color: #3b5bdb; text-decoration: none; font-weight: 500; }
-    .doc-download:hover { text-decoration: underline; }
+    /* SINGLE-COLUMN ESTIMATE BODY */
+    .estimate-body-single { padding: 24px; }
+
+    /* SELECTOR POPOVER */
+    .selector-wrap { position: relative; }
+    .selector-popover { position: absolute; z-index: 150; background: #fff; border: 1px solid #e2e4e9; border-radius: 10px; box-shadow: 0 8px 32px rgba(0,0,0,0.12); width: 360px; max-height: 480px; overflow-y: auto; display: none; top: calc(100% + 6px); left: 0; }
+    .selector-popover.open { display: block; }
+    .selector-section-label { padding: 8px 14px 4px; font-size: 11px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; }
+    .selector-fees-label { border-top: 1px solid #f0f2f5; margin-top: 4px; padding-top: 10px; }
+    .selector-room-header { padding: 5px 14px; font-size: 11px; font-weight: 600; color: #374151; background: #f3f4f6; border-top: 1px solid #e2e4e9; border-bottom: 1px solid #e2e4e9; text-transform: uppercase; letter-spacing: 0.5px; }
+    .selector-item-row { display: flex; align-items: center; gap: 10px; padding: 7px 14px; cursor: pointer; font-size: 13px; color: #374151; }
+    .selector-item-row:hover { background: #f9fafb; }
+    .selector-item-row input[type="checkbox"] { width: 14px; height: 14px; flex-shrink: 0; accent-color: #3b5bdb; cursor: pointer; }
+    .selector-fee-amount { margin-left: auto; color: #6b7280; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+    .selector-footer { padding: 10px 14px; border-top: 1px solid #f0f2f5; display: flex; justify-content: flex-end; background: #f9fafb; border-radius: 0 0 10px 10px; }
   </style>
 </head>
 <body>
@@ -224,8 +229,7 @@
   <div class="tab-bar-inner">
     <button class="tab-btn" data-tab="items">Items</button>
     <button class="tab-btn" data-tab="fees">Fees</button>
-    <button class="tab-btn active" data-tab="estimated">Estimated</button>
-    <button class="tab-btn" data-tab="dochistory">Document History</button>
+    <button class="tab-btn active" data-tab="estimated">Estimate</button>
   </div>
 </div>
 
@@ -283,8 +287,10 @@
   <!-- Action bar -->
   <div class="estimated-actions">
     <div class="actions-left">
-      <button class="btn btn-secondary">↓ Download PDF</button>
-      <button class="btn btn-secondary">✉ Send to Client</button>
+      <div class="selector-wrap" id="selector-wrap">
+        <button class="btn btn-secondary" id="btn-select-items">Select Items</button>
+        <div class="selector-popover" id="item-selector-popover"></div>
+      </div>
       <div class="published-link-bar" id="published-link-bar" style="display:none;">
         <span class="link-label">Client link:</span>
         <span class="link-url-text" id="link-url-text"></span>
@@ -297,29 +303,17 @@
     </div>
   </div>
 
-  <div class="estimated-body">
-    <!-- LEFT: Completed items -->
-    <div class="panel">
-      <div class="panel-header">
-        <span class="panel-title">Completed Items</span>
-        <span class="panel-subtitle">Select to include in estimate</span>
-      </div>
-      <table>
-        <thead><tr><th class="check-col"></th><th>Type</th><th>Item Name</th></tr></thead>
-        <tbody id="items-tbody"></tbody>
-      </table>
-    </div>
-
-    <!-- RIGHT: Estimate -->
+  <!-- Estimate panel (full width) -->
+  <div class="estimate-body-single">
     <div class="panel">
       <div class="compare-banner" id="compare-banner"></div>
       <div class="panel-header">
-        <span class="panel-title">Estimate</span>
+        <span class="panel-title">Preview</span>
         <span class="panel-subtitle" id="estimate-count">0 items selected</span>
       </div>
       <div id="estimate-empty" class="empty-estimate">
         <div class="empty-icon">📋</div>
-        <div>No items selected yet.<br>Check items on the left to add them.</div>
+        <div>No items selected yet.<br>Use "Select Items" above to add them.</div>
       </div>
       <table id="estimate-table" style="display:none;">
         <thead><tr><th>Type</th><th>Description</th><th class="num">Qty</th><th class="num">Unit Price</th><th class="num">Amount</th></tr></thead>
@@ -330,17 +324,6 @@
   </div>
 </div>
 
-<!-- TAB: DOCUMENT HISTORY -->
-<div class="tab-content" id="tab-dochistory">
-  <div class="tab-inner">
-    <div class="doc-list">
-      <div class="doc-row"><div class="doc-icon">📄</div><div class="doc-info"><div class="doc-name">Estimate 1: 2025 — v2</div><div class="doc-meta">PDF · Sent March 28, 2026</div></div><a href="#" class="doc-download">↓ Download</a></div>
-      <div class="doc-row"><div class="doc-icon">📄</div><div class="doc-info"><div class="doc-name">Estimate 1: 2025 — v1</div><div class="doc-meta">PDF · Sent March 20, 2026</div></div><a href="#" class="doc-download">↓ Download</a></div>
-      <div class="doc-row"><div class="doc-icon">📄</div><div class="doc-info"><div class="doc-name">Estimate 2: 2026 — v1</div><div class="doc-meta">PDF · Sent January 10, 2026</div></div><a href="#" class="doc-download">↓ Download</a></div>
-      <div class="doc-row"><div class="doc-icon">📋</div><div class="doc-info"><div class="doc-name">Purchase Order #001</div><div class="doc-meta">PDF · Created March 15, 2026</div></div><a href="#" class="doc-download">↓ Download</a></div>
-    </div>
-  </div>
-</div>
 
 <!-- PUBLISH MODAL -->
 <div class="modal-overlay" id="modal-overlay">
@@ -365,14 +348,14 @@
 <!-- NEW ESTIMATE MODAL -->
 <div class="modal-overlay" id="modal-new-stage">
   <div class="modal">
-    <div class="modal-header"><h2>New Estimate</h2><p>Create a new estimate for a different phase or year of this project.</p></div>
+    <div class="modal-header"><h2>New Stage</h2><p>Create a new stage for a different phase or year of this project.</p></div>
     <div class="modal-body">
-      <label for="new-stage-name">Estimate name</label>
-      <input type="text" id="new-stage-name" placeholder="e.g. Estimate 3: 2027" />
+      <label for="new-stage-name">Stage name</label>
+      <input type="text" id="new-stage-name" placeholder="e.g. Stage 3: 2027" />
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" id="btn-cancel-new-stage">Cancel</button>
-      <button class="btn btn-primary" id="btn-confirm-new-stage">Create Estimate</button>
+      <button class="btn btn-primary" id="btn-confirm-new-stage">Create Stage</button>
     </div>
   </div>
 </div>
@@ -437,9 +420,9 @@
         { id:5, room:'Kitchen',         type:'Labor',    name:'Countertop installation',  desc:'Quartz countertop installation with edge finishing',       qty:8,  price:125.00 },
       ],
       fees: [
-        { id:'f1', name:'Design Fee',         amount:500.00 },
-        { id:'f2', name:'Project Management', amount:350.00 },
-        { id:'f3', name:'Permit Filing',      amount:125.00 },
+        { id:'f1', name:'Design Fee',         amount:500.00, selected:true },
+        { id:'f2', name:'Project Management', amount:350.00, selected:true },
+        { id:'f3', name:'Permit Filing',      amount:125.00, selected:true },
       ],
       versionHistory: [
         { version:1, timestamp:'March 20, 2026 at 9:15 AM', note:'Initial estimate — bathroom only',
@@ -472,7 +455,7 @@
         { id:8, room:'Living Room', type:'Labor', name:'Interior painting',     desc:'Two-coat interior wall and ceiling painting',   qty:20, price:55.00 },
       ],
       fees: [
-        { id:'f1', name:'Design Fee', amount:650.00 },
+        { id:'f1', name:'Design Fee', amount:650.00, selected:true },
       ],
       versionHistory: [
         { version:1, timestamp:'January 10, 2026 at 2:30 PM', note:'Initial estimate for 2026 phase — living room',
@@ -518,9 +501,9 @@
 
   function renderStageSwitcher() {
     const html = `
-      <span class="stage-label">Estimate</span>
+      <span class="stage-label">Stage</span>
       ${stages.map(s => `<button class="stage-pill ${s.id === activeStageId ? 'active' : ''}" data-stage="${s.id}">${s.label}</button>`).join('')}
-      <button class="btn-add-stage" id="btn-add-stage">+ New Estimate</button>`;
+      <button class="btn-add-stage" id="btn-add-stage">+ New Stage</button>`;
     document.getElementById('stage-switcher').innerHTML = html;
     document.querySelectorAll('.stage-pill').forEach(pill => {
       pill.addEventListener('click', () => switchStage(pill.dataset.stage));
@@ -532,10 +515,11 @@
     if (id === activeStageId) return;
     activeStageId = id;
     if (compareMode) exitCompare();
+    closeSelector();
     renderStageSwitcher();
-    renderItemsTable();
     renderEstimatePanel();
     updateActionBar();
+    updateSelectorButtonLabel();
     // Update drawer title if open
     document.getElementById('drawer-title').textContent = `Version History — ${getActiveStage().label}`;
   }
@@ -551,36 +535,82 @@
     linkBar.style.display = stage.sessionPublished ? 'flex' : 'none';
   }
 
-  // ── Left panel ────────────────────────────────────────────────────────────
+  // ── Selector popover ──────────────────────────────────────────────────────
 
-  function renderItemsTable() {
+  let selectorOpen = false;
+
+  function renderSelectorPopover() {
     const stage = getActiveStage();
     const selectedIds = new Set(stage.items.map(i => i.id));
     const rooms = groupByRoom(projectItems);
-    let html = '';
+
+    let html = '<div class="selector-section-label">Items</div>';
     Object.entries(rooms).forEach(([room, items]) => {
-      html += `<tr class="room-divider"><td colspan="3">${room}</td></tr>`;
+      html += `<div class="selector-room-header">${room}</div>`;
       items.forEach(i => {
-        html += `<tr class="item-row"><td class="check-col"><input type="checkbox" data-id="${i.id}" ${selectedIds.has(i.id) ? 'checked' : ''}></td><td>${typeBadge(i.type)}</td><td>${i.name}</td></tr>`;
+        html += `<label class="selector-item-row"><input type="checkbox" data-id="${i.id}" ${selectedIds.has(i.id) ? 'checked' : ''}>${typeBadge(i.type)}<span>${i.name}</span></label>`;
       });
     });
-    document.getElementById('items-tbody').innerHTML = html;
-    document.getElementById('items-tbody').querySelectorAll('input[type="checkbox"]').forEach(cb => {
+
+    html += '<div class="selector-section-label selector-fees-label">Fees</div>';
+    stage.fees.forEach(f => {
+      html += `<label class="selector-item-row"><input type="checkbox" data-fee-id="${f.id}" ${f.selected !== false ? 'checked' : ''}><span>${f.name}</span><span class="selector-fee-amount">${fmt(f.amount)}</span></label>`;
+    });
+
+    html += '<div class="selector-footer"><button class="btn btn-primary" id="btn-selector-done">Done</button></div>';
+
+    const pop = document.getElementById('item-selector-popover');
+    pop.innerHTML = html;
+
+    pop.querySelectorAll('input[data-id]').forEach(cb => {
       cb.addEventListener('change', e => {
         const s = getActiveStage();
         const itemId = parseInt(e.target.dataset.id);
         if (e.target.checked) {
-          // Add a copy of the project item to this stage's items
           const source = projectItems.find(i => i.id === itemId);
-          if (source && !s.items.find(i => i.id === itemId)) {
-            s.items.push({ ...source });
-          }
+          if (source && !s.items.find(i => i.id === itemId)) s.items.push({ ...source });
         } else {
           s.items = s.items.filter(i => i.id !== itemId);
         }
         if (!compareMode) renderEstimatePanel();
+        updateSelectorButtonLabel();
+        saveStages();
       });
     });
+
+    pop.querySelectorAll('input[data-fee-id]').forEach(cb => {
+      cb.addEventListener('change', e => {
+        const s = getActiveStage();
+        const fee = s.fees.find(f => f.id === e.target.dataset.feeId);
+        if (fee) fee.selected = e.target.checked;
+        if (!compareMode) renderEstimatePanel();
+        updateSelectorButtonLabel();
+        saveStages();
+      });
+    });
+
+    document.getElementById('btn-selector-done').addEventListener('click', closeSelector);
+  }
+
+  function updateSelectorButtonLabel() {
+    const stage = getActiveStage();
+    const itemCount = stage.items.length;
+    const feeCount = stage.fees.filter(f => f.selected !== false).length;
+    const parts = [];
+    if (itemCount) parts.push(`${itemCount} item${itemCount !== 1 ? 's' : ''}`);
+    if (feeCount) parts.push(`${feeCount} fee${feeCount !== 1 ? 's' : ''}`);
+    document.getElementById('btn-select-items').textContent = parts.length ? `Select Items (${parts.join(', ')})` : 'Select Items';
+  }
+
+  function openSelector() {
+    renderSelectorPopover();
+    document.getElementById('item-selector-popover').classList.add('open');
+    selectorOpen = true;
+  }
+
+  function closeSelector() {
+    document.getElementById('item-selector-popover').classList.remove('open');
+    selectorOpen = false;
   }
 
   // ── Right panel ───────────────────────────────────────────────────────────
@@ -617,8 +647,11 @@
       });
     });
 
-    html += `<tr class="room-divider fees-divider"><td colspan="5">Fees</td></tr>`;
-    stage.fees.forEach(f => { total += f.amount; html += `<tr class="fee-row"><td colspan="4">${f.name}</td><td class="num">${fmt(f.amount)}</td></tr>`; });
+    const selectedFees = stage.fees.filter(f => f.selected !== false);
+    if (selectedFees.length) {
+      html += `<tr class="room-divider fees-divider"><td colspan="5">Fees</td></tr>`;
+      selectedFees.forEach(f => { total += f.amount; html += `<tr class="fee-row"><td colspan="4">${f.name}</td><td class="num">${fmt(f.amount)}</td></tr>`; });
+    }
 
     tbody.innerHTML = html;
     totalEl.textContent = fmt(total);
@@ -637,7 +670,7 @@
           cell.textContent = fmt(item.price);
           const ac = tbody.querySelector(`.amount-cell[data-id="${id}"]`);
           if (ac) ac.textContent = fmt(item.qty * item.price);
-          let t = 0; s.items.forEach(i => { t += i.qty * i.price; }); s.fees.forEach(f => { t += f.amount; }); totalEl.textContent = fmt(t);
+          let t = 0; s.items.forEach(i => { t += i.qty * i.price; }); s.fees.filter(f => f.selected !== false).forEach(f => { t += f.amount; }); totalEl.textContent = fmt(t);
         }
       });
     });
@@ -685,10 +718,11 @@
     // Fees diff
     const vFees = v.fees || [], pastFeeById = {};
     vFees.forEach(f => { pastFeeById[f.id] = f; });
-    const allFeeIds = [...new Set([...vFees.map(f => f.id), ...stage.fees.map(f => f.id)])];
+    const currSelectedFees = stage.fees.filter(f => f.selected !== false);
+    const allFeeIds = [...new Set([...vFees.map(f => f.id), ...currSelectedFees.map(f => f.id)])];
     html += `<tr class="room-divider fees-divider"><td colspan="5">Fees</td></tr>`;
     allFeeIds.forEach(id => {
-      const pf = pastFeeById[id], cf = stage.fees.find(f => f.id === id);
+      const pf = pastFeeById[id], cf = currSelectedFees.find(f => f.id === id);
       if (pf && !cf) html += `<tr class="diff-removed"><td colspan="4"><span class="removed-val">${pf.name}</span><span class="diff-label">Removed</span></td><td class="num"><span class="removed-val">${fmt(pf.amount)}</span></td></tr>`;
       else if (!pf && cf) { total += cf.amount; html += `<tr class="diff-added"><td colspan="4">${cf.name}<span class="diff-label">Added</span></td><td class="num">${fmt(cf.amount)}</td></tr>`; }
       else if (pf && cf) { total += cf.amount; const ac = pf.amount !== cf.amount; html += `<tr class="fee-row"><td colspan="4">${cf.name}</td><td class="num ${ac ? 'diff-cell-changed' : ''}">${fmt(cf.amount)}${ac ? `<span class="old-val">${fmt(pf.amount)}</span>` : ''}</td></tr>`; }
@@ -812,7 +846,7 @@
     stage.versionHistory.push({
       version: nextNum, timestamp: ts, note,
       items: stage.items.map(i => ({ id:i.id, room:i.room, type:i.type, desc:i.desc, qty:i.qty, price:i.price })),
-      fees: stage.fees.map(f => ({ ...f }))
+      fees: stage.fees.filter(f => f.selected !== false).map(f => ({ id:f.id, name:f.name, amount:f.amount }))
     });
     stage.sessionPublished = true;
     saveStages();
@@ -837,12 +871,25 @@
     window.open(`client.html?stage=${activeStageId}`, '_blank');
   });
 
+  // ── Selector button + outside-click ──────────────────────────────────────
+
+  document.getElementById('btn-select-items').addEventListener('click', e => {
+    e.stopPropagation();
+    selectorOpen ? closeSelector() : openSelector();
+  });
+
+  document.addEventListener('click', e => {
+    if (selectorOpen && !document.getElementById('selector-wrap').contains(e.target)) {
+      closeSelector();
+    }
+  });
+
   // ── Init ──────────────────────────────────────────────────────────────────
 
   renderStageSwitcher();
-  renderItemsTable();
   renderEstimatePanel();
   updateActionBar();
+  updateSelectorButtonLabel();
 </script>
 </body>
 </html>
